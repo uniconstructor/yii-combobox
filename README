@@ -1,3 +1,5 @@
 A jQuery combobox, allowing selecting items from a list or typing them in. This is done by combining a select, text field, and button.
 
 As it extends the included JUI widget, theming will respect your customizations.
+
+This fork created for use with multiModelForm plugin only: http://www.yiiframework.com/extension/multimodelform#c12266
