@@ -23,6 +23,21 @@ class EJuiComboBox extends CJuiInputWidget
 	 * @var array the entries that the autocomplete should choose from.
 	 */
 	public $data = array();
+	
+	/**
+	 * @var bool whether the $data is an associative array or not
+	 */
+	public $assoc = true;
+	
+	/**
+	 * @var string - name of the text field (if custom text is allowed)
+	 */
+	public $textFieldName = 'text';
+	
+	public $textFieldValue;
+	
+	public $textFieldAttribute;
+	
 	/**
 	 * @var string A jQuery selector used to apply the widget to the element(s).
 	 * Use this to have the elements keep their binding when the DOM is manipulated
@@ -45,12 +60,16 @@ class EJuiComboBox extends CJuiInputWidget
 			$js = "jQuery('#{$id}').{$script}";
 		return array($id, $js);
 	}
-
+    
+	/**
+	 * (non-PHPDoc)
+	 * @see parent::init()
+	 */
 	public function init()
 	{
 		$cs = Yii::app()->getClientScript();
 		$assets = Yii::app()->getAssetManager()->publish(dirname(__FILE__) . '/assets');
-		$cs->registerScriptFile($assets . '/jquery.ui.widget.min.js');
+		//$cs->registerScriptFile($assets . '/jquery.ui.widget.min.js');
 		$cs->registerScriptFile($assets . '/jquery.ui.combobox.js');
 
 		parent::init();
@@ -63,30 +82,42 @@ class EJuiComboBox extends CJuiInputWidget
 	public function run()
 	{
 		list($name, $id) = $this->resolveNameID();
-
+        //CVarDumper::dump($this->attribute, 10, true);die;
 		if (is_array($this->data) && !empty($this->data)){
-			$data = array_combine($this->data, $this->data);
-			array_unshift($data, null);
+			//if $data is not an assoc array make each value its key
+			$data=($this->assoc)?$this->data:array_combine($this->data, $this->data);
+			
+			//does the same as array_unshift($data,null) but does not break assoc arrays
+			$data=array(""=>"")+$data;
+		} else {
+		    $data = array();
 		}
-		else
-			$data = array();
-
-		echo CHtml::dropDownList(null, null, $data, array('id' => $id . '_select', 'style'=>'display:none;'));
-
-		if ($this->hasModel())
-			echo CHtml::activeTextField($this->model, $this->attribute, $this->htmlOptions);
-		else
-			echo CHtml::textField($name, $this->value, $this->htmlOptions);
-
+		
 		$this->options = array_merge($this->defaultOptions, $this->options);
-
+		
+		if ($this->hasModel())
+		{
+		    echo CHtml::activeDropDownList($this->model, $this->attribute, $data);
+		    $attributeName = mb_ereg_replace('\[[0-9a-zA-Z_ -]{0,255}\]', '', $this->attribute);
+		    $textFieldName = mb_ereg_replace($attributeName, $this->textFieldName, $name);
+		    $textFieldValue = CHtml::resolveValue($this->model, $this->textFieldAttribute);
+		}else
+		{
+		    echo CHtml::dropDownList($name, $this->value, $data);
+		    // @todo set text field name without model
+		    $textFieldName = $this->textFieldName;
+		    $textFieldValue = $this->textFieldValue;
+		}
+	    
+		echo CHtml::textField($textFieldName, $textFieldValue, array('id'=>$id.'_combobox'));
+	    
 		$options = CJavaScript::encode($this->options);
 
 		$cs = Yii::app()->getClientScript();
 
 		$js = "combobox({$options});";
 
-		list($id, $js) = $this->setSelector($id, $js);
+		list($id, $js) = $this->setSelector($id.'_combobox', $js);
 		$cs->registerScript(__CLASS__ . '#' . $id, $js);
 	}
 

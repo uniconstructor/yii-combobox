@@ -3,7 +3,6 @@
 	$.widget("ui.combobox", {
 		_create: function() {
 			var options = this.options;
-
 			var self = this,
 			input = this.element,
 			select = input.prev("select").hide();
